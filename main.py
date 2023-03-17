@@ -1,53 +1,67 @@
-# Load the dataset
 from math import log
 import random
+
+# Load the dataset
+print("Loading dataset...")
 with open('high_diamond_ranked_10min.csv', 'r') as f:
-    data = f.readlines()
+    data2 = f.readlines()
 
 # Remove the header row
-header = data[0].strip().split(',')
-data = data[1:]
-
-# Split the data into X and y
+header = data2[0].strip().split(',')
+data = data2[1:]
 X = []
 y = []
 for row in data:
     row_data = row.strip().split(',')
-    if row_data[-1].isdigit():
-        X.append([float(x) if x.isdigit() else x for x in row_data[:-1]])
-        y.append(int(row_data[-1]))
+    print(row_data[-1])
+    X.append([float(x) if x.isdigit() else x for x in row_data[:-1]])
+    y.append(float(row_data[-1]))
 
+print('x', X)
+print('y', y)
+print("Loaded", len(y), "samples with", len(X[0]), "features")
 
 # Encoding the categorical variables
 categorical_vars = [i for i in range(
     len(header)) if header[i] == 'categorical_variable']
+if len(categorical_vars) > 0:
+    print("Encoding", len(categorical_vars), "categorical variables...")
 for i in categorical_vars:
     categories = list(set([row[i] for row in X]))
     for j in range(len(X)):
         X[j][i] = categories.index(X[j][i])
+print("Done encoding categorical variables")
 
 # Checking if the dataset is balanced and applying random oversampling if it's not
 n_samples = len(y)
 n_classes = len(set(y))
-if min([y.count(c) for c in range(n_classes)]) < n_samples/n_classes:
+if y and min([y.count(c) for c in range(n_classes)]) < n_samples/n_classes:
+    print("Dataset is unbalanced, applying random oversampling...")
     max_class_samples = max([y.count(c) for c in range(n_classes)])
     for c in range(n_classes):
         class_samples = [X[i] for i in range(n_samples) if y[i] == c]
         while len(class_samples) < max_class_samples:
-            class_samples.append(
-                class_samples[random.randint(0, len(class_samples)-1)])
+            if class_samples:
+                class_samples.append(
+                    class_samples[random.randint(0, len(class_samples)-1)])
+            else:
+                break
             y.append(c)
             X.append(class_samples[-1])
+    print("Done oversampling, new dataset size is", len(y))
 
 # Scaling the variables
 numeric_vars = [i for i in range(
     len(header)) if header[i].startswith('numeric_variable')]
+if len(numeric_vars) > 0:
+    print("Scaling", len(numeric_vars), "numeric variables...")
 for i in numeric_vars:
     col_values = [row[i] for row in X]
     min_value = min(col_values)
     max_value = max(col_values)
     for j in range(len(X)):
         X[j][i] = (X[j][i] - min_value) / (max_value - min_value)
+print("Done scaling numeric variables")
 
 # Variable selection using SelectKBest and f_classif
 
@@ -69,21 +83,3 @@ def information_gain(X, y, i):
     for j in range(len(col_thresholds)-1):
         threshold = (col_thresholds[j] + col_thresholds[j+1]) / 2
         left_y = [y[k] for k in range(len(y)) if X[k][i] <= threshold]
-        right_y = [y[k] for k in range(len(y)) if X[k][i] > threshold]
-        left_entropy = entropy(left_y)
-        right_entropy = entropy(right_y)
-        gain = entropy(y) - (len(left_y)/len(y)*left_entropy +
-                             len(right_y)/len(y)*right_entropy)
-        if gain > max_gain:
-            max_gain = gain
-            best_threshold = threshold
-    return max_gain, best_threshold
-
-
-k = 5
-feature_scores = []
-for i in range(len(header)-1):
-    if i in categorical_vars:
-        score = 0
-    else:
-        score, _ = information_gain
