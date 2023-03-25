@@ -14,42 +14,48 @@ from tree import tree
 print("Loading dataset...")
 data = load_csv("high_diamond_ranked_10min.csv")
 
-train_set = []
-validation_set = []
-test_set = []
-train_size = int(len(data) * 0.8)
-validation_size = int(len(data) * 0.1)
+traininPorcentage = 0.8
+validationPorcentage = 0.1
+
+train, val, test = [], [], []
+trainSize = int(len(data) * traininPorcentage)
+valSize = int(len(data) * validationPorcentage)
 random.shuffle(data)
-for i in range(train_size):
-    train_set.append(data[i])
-for i in range(train_size, train_size+validation_size):
-    validation_set.append(data[i])
-for i in range(train_size+validation_size, len(data)):
-    test_set.append(data[i])
+for i in range(trainSize):
+    train.append(data[i])
+for i in range(trainSize, trainSize+valSize):
+    val.append(data[i])
+for i in range(trainSize+valSize, len(data)):
+    test.append(data[i])
 
 # PARTE 1.1
 
 tree = tree()
 print("Building tree...")
-print("Training set size:", len(train_set))
-print('tranining set:', train_set)
-tree_model = tree.build_tree(train_set)
-actual = [row[-1] for row in validation_set]
-predicted = [tree.predict(row, tree_model) for row in validation_set]
+print("Training set size:", len(train))
+print('tranining set:', train)
+tree_model = tree.build_tree(train)
+actual = [row[-1] for row in val]
+predicted = [tree.predict(row, tree_model) for row in val]
 precision = 0
 for i in range(len(actual)):
     if actual[i] == predicted[i]:
         precision += 1
 precision = precision / float(len(actual))
 
-print('PRECISION VALIDATION MODEL:', precision*100)
+precisionResult = precision*100*100
 
-actual = [row[-1] for row in test_set]
-predicted = [tree.predict(row, tree_model) for row in test_set]
+print('PRECISION VALIDATION MODEL:', precisionResult)
+
+actual = [row[-1] for row in test]
+predicted = [tree.predict(row, tree_model) for row in test]
 precision = 0
 print('ACTUAL:')
 for i in range(len(actual)):
     if actual[i] == predicted[i]:
         precision += 1
 precision = precision / float(len(actual))
-print('PRECISION TEST MODEL:', precision*100)
+
+precisionResult = precision*100*100
+
+print('PRECISION TEST MODEL:', precisionResult)
