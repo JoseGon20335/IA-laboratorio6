@@ -34,7 +34,7 @@ tree = tree()
 print("Building tree...")
 print("Training set size:", len(train))
 print('tranining set:', train)
-tree_model = tree.build_tree(train)
+tree_model = tree.buildTree(train)
 actual = [row[-1] for row in val]
 predicted = [tree.predict(row, tree_model) for row in val]
 precision = 0
